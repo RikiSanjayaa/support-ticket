@@ -15,32 +15,37 @@ if (
     (!("color-theme" in localStorage) &&
         window.matchMedia("(prefers-color-scheme: dark)").matches)
 ) {
-    themeToggleLightIcon.classList.remove("hidden");
+    document.documentElement.classList.add('dark');
 } else {
-    themeToggleDarkIcon.classList.remove("hidden");
+    document.documentElement.classList.remove('dark');
 }
 
 var themeToggleBtn = document.getElementById("theme-toggle");
 
-themeToggleBtn.addEventListener("click", function () {
-    themeToggleDarkIcon.classList.toggle("hidden");
-    themeToggleLightIcon.classList.toggle("hidden");
-
-    if (localStorage.getItem("color-theme")) {
-        if (localStorage.getItem("color-theme") === "light") {
-            document.documentElement.classList.add("dark");
-            localStorage.setItem("color-theme", "dark");
-        } else {
-            document.documentElement.classList.remove("dark");
-            localStorage.setItem("color-theme", "light");
-        }
+// Update button icons based on current theme
+function updateThemeToggleIcons() {
+    if (document.documentElement.classList.contains('dark')) {
+        themeToggleDarkIcon.classList.add('hidden');
+        themeToggleLightIcon.classList.remove('hidden');
     } else {
-        if (document.documentElement.classList.contains("dark")) {
-            document.documentElement.classList.remove("dark");
-            localStorage.setItem("color-theme", "light");
-        } else {
-            document.documentElement.classList.add("dark");
-            localStorage.setItem("color-theme", "dark");
-        }
+        themeToggleDarkIcon.classList.remove('hidden');
+        themeToggleLightIcon.classList.add('hidden');
     }
+}
+
+// Initial icon state
+updateThemeToggleIcons();
+
+themeToggleBtn.addEventListener("click", function () {
+    document.documentElement.classList.toggle('dark');
+
+    // Update localStorage
+    if (document.documentElement.classList.contains('dark')) {
+        localStorage.setItem('color-theme', 'dark');
+    } else {
+        localStorage.setItem('color-theme', 'light');
+    }
+
+    // Update icons
+    updateThemeToggleIcons();
 });
