@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Ticket;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -35,5 +35,12 @@ class DatabaseSeeder extends Seeder
             'password' => 'password',
             'role' => 'user',
         ]);
+
+        // Create additional users
+        User::factory(3)->create(['role' => 'user']);
+        User::factory(2)->create(['role' => 'agent']);
+
+        // Create tickets
+        Ticket::factory(20)->create();
     }
 }

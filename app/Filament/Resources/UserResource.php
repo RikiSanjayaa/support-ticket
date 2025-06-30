@@ -26,15 +26,25 @@ class UserResource extends Resource
     {
         return $form
             ->schema([
-                TextInput::make('name'),
-                TextInput::make('email')->email(),
+                TextInput::make('name')
+                    ->required()
+                    ->maxLength(255),
+                TextInput::make('email')
+                    ->email()
+                    ->required()
+                    ->maxLength(255),
                 TextInput::make('password')
                     ->password()
                     ->dehydrated(fn($state) => filled($state))
                     ->required(fn(string $context): bool => $context === 'create')
                     ->maxLength(255),
                 Select::make('role')
-                    ->options(['user' => 'user', 'admin' => 'admin',])
+                    ->options([
+                        'user' => 'User',
+                        'agent' => 'Agent',
+                        'admin' => 'Admin',
+                    ])
+                    ->required()
                     ->native(false)
             ]);
     }
@@ -43,9 +53,28 @@ class UserResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('name'),
-                TextColumn::make('email'),
+                TextColumn::make('name')
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('email')
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('role')
+                    ->badge()
+                    ->color(fn(string $state): string => match ($state) {
+                        'admin' => 'danger',
+                        'agent' => 'warning',
+                        'user' => 'success',
+                        default => 'gray',
+                    })
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('name', 'asc')
             ->filters([
                 //
             ])
