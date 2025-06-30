@@ -28,7 +28,11 @@ class UserResource extends Resource
             ->schema([
                 TextInput::make('name'),
                 TextInput::make('email')->email(),
-                TextInput::make('password')->password(),
+                TextInput::make('password')
+                    ->password()
+                    ->dehydrated(fn($state) => filled($state))
+                    ->required(fn(string $context): bool => $context === 'create')
+                    ->maxLength(255),
                 Select::make('role')
                     ->options(['user' => 'user', 'admin' => 'admin',])
                     ->native(false)
