@@ -34,15 +34,21 @@ class TicketController extends Controller
         $validated = $request->validate([
             'title' => 'required|max:255',
             'description' => 'required',
-            'status' => 'required|in:open,in_progress,closed'
+            'status' => 'nullable|in:open,in_progress,closed'
         ]);
+
+        // Set default status for dashboard submissions
+        if (!isset($validated['status'])) {
+            $validated['status'] = 'open';
+        }
 
         // Add the user who created the ticket
         $validated['created_by'] = \Illuminate\Support\Facades\Auth::user()->id;
 
         Ticket::create($validated);
 
-        return redirect()->route('tickets.index')->with('success', 'Ticket created successfully.');
+        return redirect()->route('dashboard')
+            ->with('status', 'ticket-created');
     }
 
     /**
@@ -97,5 +103,60 @@ class TicketController extends Controller
         $ticket->delete();
 
         return redirect()->route('tickets.index')->with('success', 'Ticket deleted successfully.');
+    }
+
+    /**
+     * Assign the ticket to the authenticated agent.
+     */
+    public function assign(Ticket $ticket)
+    {
+        // Check if user is an agent
+        if (\Illuminate\Support\Facades\Auth::user()->role !== 'agent' && \Illuminate\Support\Facades\Auth::user()->role !== 'admin') {
+            abort(403, 'Unauthorized action.');
+        }
+
+        // If ticket is already assigned to this agent, unassign it
+        if ($ticket->assigned_to === \Illuminate\Support\Facades\Auth::user()->id) {
+            $ticket->update([
+                'assigned_to' => null,
+                'status' => 'open'
+            ]);
+            $message = 'Ticket unassigned successfully';
+        } else {
+            // Assign ticket to this agent
+            $ticket->update([
+                'assigned_to' => \Illuminate\Support\Facades\Auth::user()->id,
+                'status' => 'in_progress'
+            ]);
+            $message = 'Ticket assigned successfully';
+        }
+
+        return redirect()->back()->with('success', 'Ticket assigned successfully');
+    }
+
+    /**
+     * Mark the ticket as resolved.
+     */
+    public function resolve(Ticket $ticket)
+    {
+        // Check if user is authorized to resolve the ticket
+        $role = \Illuminate\Support\Facades\Auth::user()->role;
+        if ($role !== 'agent' && $role !== 'admin') {
+            abort(403, 'Unauthorized action.');
+        }
+
+        // Check if the ticket is assigned to the current agent
+        if ($ticket->assigned_to !== \Illuminate\Support\Facades\Auth::user()->id) {
+            return redirect()->back()->with('error', 'You can only resolve tickets assigned to you.');
+        }
+
+        // Update ticket status and resolution details
+        $ticket->update([
+            'status' => 'closed',
+            'resolved_by' => \Illuminate\Support\Facades\Auth::user()->id,
+            'resolved_at' => now()
+        ]);
+
+        return redirect()->back()->with('success', 'Ticket marked as resolved');
     }
 }
