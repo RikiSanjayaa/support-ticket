@@ -51,16 +51,24 @@ class LatestTickets extends BaseWidget
 
                 SelectFilter::make('assigned_to')
                     ->label('Assigned To')
-                    ->options(fn() => User::query()
-                        ->where('role', 'agent')
-                        ->pluck('name', 'id')
-                        ->toArray())
+                    ->options(fn() => [
+                        '' => 'All Tickets',
+                        'unassigned' => 'Unassigned',
+                        ...User::query()
+                            ->where('role', 'agent')
+                            ->pluck('name', 'id')
+                            ->toArray()
+                    ])
                     ->searchable()
                     ->preload()
                     ->query(function ($query, array $data) {
-                        return $data['value']
-                            ? $query->where('assigned_to', $data['value'])
-                            : $query->whereNull('assigned_to');
+                        if (!$data['value']) {
+                            return $query; // Show all tickets
+                        }
+
+                        return $data['value'] === 'unassigned'
+                            ? $query->whereNull('assigned_to')
+                            : $query->where('assigned_to', $data['value']);
                     })
             ]);
     }
