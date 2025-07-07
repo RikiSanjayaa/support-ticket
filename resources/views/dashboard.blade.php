@@ -51,9 +51,10 @@
                             <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ __('Recent Tickets') }}
                             </h3>
                             @if ($tickets?->count() > 0)
-                                <div class="mt-4 space-y-4">
+                                <div class="mt-4">
                                     @foreach ($tickets as $ticket)
-                                        <div class="border-b dark:border-gray-700 pb-4">
+                                        <div onclick="window.location='{{ route('tickets.show', $ticket) }}'"
+                                            class="border-b dark:border-gray-700 py-4 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors duration-150 -mx-6 px-6">
                                             <div class="flex justify-between items-start">
                                                 <div>
                                                     <h4 class="font-medium text-gray-900 dark:text-gray-100">
@@ -63,11 +64,11 @@
                                                 </div>
                                                 <span
                                                     class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                                    {{ match ($ticket->status) {
-                                                        'open' => 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-                                                        'in_progress' => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
-                                                        'closed' => 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-                                                    } }}">
+                        {{ match ($ticket->status) {
+                            'open' => 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
+                            'in_progress' => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+                            'closed' => 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+                        } }}">
                                                     {{ ucfirst($ticket->status) }}
                                                 </span>
                                             </div>
@@ -155,15 +156,12 @@
                                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                                 {{ __('Created') }}
                                             </th>
-                                            <th
-                                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                                {{ __('Actions') }}
-                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                                         @forelse($recentTickets ?? [] as $ticket)
-                                            <tr>
+                                            <tr onclick="window.location='{{ route('tickets.show', $ticket) }}'"
+                                                class="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors duration-150">
                                                 <td
                                                     class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                                                     #{{ $ticket->id }}
@@ -174,11 +172,11 @@
                                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
                                                     <span
                                                         class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                            {{ match ($ticket->status) {
-                                                'open' => 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-                                                'in_progress' => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
-                                                'closed' => 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-                                            } }}">
+                    {{ match ($ticket->status) {
+                        'open' => 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
+                        'in_progress' => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+                        'closed' => 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+                    } }}">
                                                         {{ ucfirst($ticket->status) }}
                                                     </span>
                                                 </td>
@@ -186,19 +184,11 @@
                                                     class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                                                     {{ $ticket->created_at->format('d/m/Y') }}
                                                 </td>
-                                                <td
-                                                    class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                                                    <div class="flex space-x-2">
-                                                        <x-primary-button class="px-3 py-1"
-                                                            onclick="window.location.href='{{ route('tickets.show', $ticket) }}'">
-                                                            {{ __('View') }}
-                                                        </x-primary-button>
-                                                    </div>
-                                                </td>
+                                                {{-- Remove the Actions column since the entire row is now clickable --}}
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="5"
+                                                <td colspan="4"
                                                     class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
                                                     {{ __('No tickets found') }}
                                                 </td>

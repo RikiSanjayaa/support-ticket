@@ -24,60 +24,28 @@
                                 <th class="px-6 py-3 text-left text-gray-900 dark:text-gray-100">Assigned To</th>
                                 <th class="px-6 py-3 text-left text-gray-900 dark:text-gray-100">Created By</th>
                                 <th class="px-6 py-3 text-left text-gray-900 dark:text-gray-100">Created</th>
-                                <th class="px-6 py-3 text-left text-gray-900 dark:text-gray-100">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach ($tickets as $ticket)
-                                <tr class="border-t border-gray-200 dark:border-gray-700">
+                                <tr onclick="window.location='{{ route('tickets.show', $ticket) }}'"
+                                    class="border-t border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors duration-150">
                                     <td class="px-6 py-4">{{ $ticket->title }}</td>
                                     <td class="px-6 py-4">
                                         <span
                                             class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                            {{ match ($ticket->status) {
-                                                'open' => 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-                                                'in_progress' => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
-                                                'closed' => 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-                                                default => 'bg-gray-100 text-gray-800',
-                                            } }}">
+                        {{ match ($ticket->status) {
+                            'open' => 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
+                            'in_progress' => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+                            'closed' => 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+                            default => 'bg-gray-100 text-gray-800',
+                        } }}">
                                             {{ ucfirst($ticket->status) }}
                                         </span>
                                     </td>
-                                    <td class="px-6 py-4">
-                                        {{ $ticket->assignedAgent?->name ?? 'Unassigned' }}
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        {{ $ticket->creator?->name ?? 'Unknown' }}
+                                    <td class="px-6 py-4">{{ $ticket->assignedAgent?->name ?? 'Unassigned' }}</td>
+                                    <td class="px-6 py-4">{{ $ticket->creator?->name ?? 'Unknown' }}</td>
                                     <td class="px-6 py-4">{{ $ticket->created_at->format('Y-m-d') }}</td>
-                                    <td class="px-6 py-4">
-                                        <div class="flex flex-wrap gap-2">
-                                            {{-- View button - visible to all users --}}
-                                            <x-primary-button class="w-20 justify-center">
-                                                <a href="{{ route('tickets.show', $ticket) }}">{{ __('View') }}</a>
-                                            </x-primary-button>
-
-                                            {{-- Edit button - visible to agents and admins --}}
-                                            @if (auth()->user()->role === 'admin' || auth()->user()->role === 'agent')
-                                                <x-secondary-button class="w-20 justify-center">
-                                                    <a
-                                                        href="{{ route('tickets.edit', $ticket) }}">{{ __('Edit') }}</a>
-                                                </x-secondary-button>
-                                            @endif
-
-                                            {{-- Delete button - visible only to admins --}}
-                                            @if (auth()->user()->role === 'admin')
-                                                <form action="{{ route('tickets.destroy', $ticket) }}" method="POST"
-                                                    class="inline">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <x-danger-button type="submit" class="w-20 justify-center"
-                                                        onclick="return confirm('Are you sure you want to delete this ticket?')">
-                                                        {{ __('Delete') }}
-                                                    </x-danger-button>
-                                                </form>
-                                            @endif
-                                        </div>
-                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>

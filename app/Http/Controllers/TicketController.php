@@ -159,4 +159,34 @@ class TicketController extends Controller
 
         return redirect()->back()->with('success', 'Ticket marked as resolved');
     }
+
+    public function close(Ticket $ticket)
+    {
+        if (\Illuminate\Support\Facades\Auth::user()->role !== 'agent' && \Illuminate\Support\Facades\Auth::user()->id !== $ticket->created_by) {
+            abort(403);
+        }
+
+        $ticket->update([
+            'status' => 'closed',
+            'resolved_at' => now(),
+            'resolved_by' => \Illuminate\Support\Facades\Auth::user()->id
+        ]);
+
+        return back()->with('success', 'Ticket closed successfully');
+    }
+
+    public function reopen(Ticket $ticket)
+    {
+        if (\Illuminate\Support\Facades\Auth::user()->role !== 'agent' && \Illuminate\Support\Facades\Auth::user()->id !== $ticket->created_by) {
+            abort(403);
+        }
+
+        $ticket->update([
+            'status' => 'open',
+            'resolved_at' => null,
+            'resolved_by' => null
+        ]);
+
+        return back()->with('success', 'Ticket reopened successfully');
+    }
 }
