@@ -22,7 +22,7 @@ class LatestTickets extends BaseWidget
             ->query(
                 Ticket::query()
                     ->latest()
-                    ->limit(5)
+                    ->limit(10)
             )
             ->columns([
                 TextColumn::make('title')
@@ -37,12 +37,23 @@ class LatestTickets extends BaseWidget
                     }),
                 TextColumn::make('created_by')
                     ->getStateUsing(fn($record): string => $record->creator->name),
-                TextColumn::make('created_at')
-                    ->dateTime(),
                 TextColumn::make('assigned_to')
                     ->getStateUsing(fn($record): ?string => $record->assignedAgent?->name ?? 'Unassigned'),
+                TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                SelectFilter::make('status')
+                    ->label('Status')
+                    ->options([
+                        'open' => 'Open',
+                        'in_progress' => 'In Progress',
+                        'closed' => 'Closed',
+                    ])
+                    ->preload(),
+
                 SelectFilter::make('created_by')
                     ->label('Created By')
                     ->relationship('creator', 'name')
@@ -70,6 +81,10 @@ class LatestTickets extends BaseWidget
                             ? $query->whereNull('assigned_to')
                             : $query->where('assigned_to', $data['value']);
                     })
+            ])
+            ->actions([
+                Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ]);
     }
 }

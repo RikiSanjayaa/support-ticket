@@ -15,6 +15,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
@@ -59,7 +60,8 @@ class TicketResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('title')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('status')
                     ->badge()
                     ->color(fn(string $state): string => match ($state) {
@@ -67,15 +69,54 @@ class TicketResource extends Resource
                         'in_progress' => 'warning',
                         'closed' => 'success',
                     }),
+                TextColumn::make('created_by')
+                    ->getStateUsing(fn($record): string => $record->creator->name),
                 TextColumn::make('assignedAgent.name')
                     ->label('Assigned To')
                     ->default('Unassigned'),
                 TextColumn::make('created_at')
                     ->dateTime()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([
-                //
+                SelectFilter::make('status')
+                    ->label('Status')
+                    ->options([
+                        'open' => 'Open',
+                        'in_progress' => 'In Progress',
+                        'closed' => 'Closed',
+                    ])
+                    ->preload(),
+
+                SelectFilter::make('created_by')
+                    ->label('Created By')
+                    ->relationship('creator', 'name')
+                    ->searchable()
+                    ->preload(),
+
+                SelectFilter::make('assigned_to')
+                    ->label('Assigned To')
+                    ->options(fn() => [
+                        '' => 'All Tickets',
+                        'unassigned' => 'Unassigned',
+                        ...User::query()
+                            ->where('role', 'agent')
+                            ->pluck('name', 'id')
+                            ->toArray()
+                    ])
+                    ->searchable()
+                    ->preload()
+                    ->query(function ($query, array $data) {
+                        if (!$data['value']) {
+                            return $query; // Show all tickets
+                        }
+
+                        return $data['value'] === 'unassigned'
+                            ? $query->whereNull('assigned_to')
+                            : $query->where('assigned_to', $data['value']);
+                    })
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

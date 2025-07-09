@@ -10,9 +10,6 @@
                     {{ __('Back to Tickets') }}
                 </a>
             </x-secondary-button>
-            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                #{{ $ticket->id }} - {{ $ticket->title }}
-            </h2>
             <div class="flex gap-2">
                 @if (auth()->user()->role === 'agent')
                     @if ($ticket->assigned_to === auth()->id())
@@ -39,6 +36,9 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6">
+                    <h1 class="font-semibold text-3xl text-gray-800 dark:text-gray-200 leading-tight mb-4">
+                        #{{ $ticket->id }} - {{ $ticket->title }}
+                    </h1>
                     <div class="flex items-center gap-4 border-b border-gray-200 dark:border-gray-700 pb-4 mb-4">
                         <span
                             class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
@@ -107,11 +107,11 @@
                             <div class="flex justify-between items-start w-full">
                                 <div class="flex-shrink-0">
                                     <div
-                                        class="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-700 dark:text-gray-300
+                                        class="h-10 w-10 rounded-full flex items-center justify-center
                                         {{ match ($reply->user->role) {
-                                            'admin' => 'bg-red-500 dark:bg-red-700',
-                                            'agent' => 'bg-blue-500 dark:bg-blue-700',
-                                            default => 'bg-gray-500 dark:bg-gray-700',
+                                            'admin' => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
+                                            'agent' => 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+                                            default => 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300',
                                         } }}">
                                         {{ substr($reply->user->name, 0, 1) }}
                                     </div>
