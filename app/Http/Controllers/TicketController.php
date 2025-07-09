@@ -64,6 +64,12 @@ class TicketController extends Controller
      */
     public function edit(Ticket $ticket)
     {
+        if (!(\Illuminate\Support\Facades\Auth::user()->role === 'admin' ||
+            \Illuminate\Support\Facades\Auth::user()->role === 'agent' ||
+            \Illuminate\Support\Facades\Auth::user()->id === $ticket->created_by)) {
+            abort(403);
+        }
+
         $agents = User::where('role', 'agent')->get();
         return view('tickets.edit', compact('ticket', 'agents'));
     }
@@ -73,26 +79,27 @@ class TicketController extends Controller
      */
     public function update(Request $request, Ticket $ticket)
     {
+        if (!(\Illuminate\Support\Facades\Auth::user()->role === 'admin' ||
+            \Illuminate\Support\Facades\Auth::user()->role === 'agent' ||
+            \Illuminate\Support\Facades\Auth::user()->id === $ticket->created_by)) {
+            abort(403);
+        }
+
         $validated = $request->validate([
-            'title' => 'required|max:255',
-            'description' => 'required',
-            'status' => 'required|in:open,in_progress,closed',
+            'title' => 'required|max:255|string',
+            'description' => 'required|string',
             'assigned_to' => 'nullable|exists:users,id'
         ]);
 
-        if (empty($validated['assigned_to'])) {
-            $validated['assigned_to'] = null;
-        }
-
-        // If ticket is being closed, add resolution details
-        if ($validated['status'] === 'closed' && $ticket->status !== 'closed') {
-            $validated['resolved_by'] = \Illuminate\Support\Facades\Auth::user()->id;
-            $validated['resolved_at'] = now();
+        // Only allow admin to change assigned_to
+        if (\Illuminate\Support\Facades\Auth::user()->role !== 'admin') {
+            unset($validated['assigned_to']);
         }
 
         $ticket->update($validated);
 
-        return redirect()->route('tickets.index')->with('success', 'Ticket updated successfully');
+        return redirect()->route('tickets.show', $ticket)
+            ->with('success', 'Ticket updated successfully');
     }
 
     /**
@@ -141,13 +148,15 @@ class TicketController extends Controller
     {
         // Check if user is authorized to resolve the ticket
         $role = \Illuminate\Support\Facades\Auth::user()->role;
-        if ($role !== 'agent' && $role !== 'admin') {
+        if (!($role === 'agent' || $role === 'admin' || Auth::id() === $ticket->created_by)) {
+            echo $ticket->created_by;
+            echo \Illuminate\Support\Facades\Auth::user()->id;
             abort(403, 'Unauthorized action.');
         }
 
-        // Check if the ticket is assigned to the current agent
-        if ($ticket->assigned_to !== \Illuminate\Support\Facades\Auth::user()->id) {
-            return redirect()->back()->with('error', 'You can only resolve tickets assigned to you.');
+        // Check if the ticket is assigned to the current agent or the creator itself
+        if (!($ticket->assigned_to === Auth::id() || $ticket->created_by === Auth::id())) {
+            return redirect()->back()->with('error', 'You can only resolve tickets assigned to you or tickets you created.');
         }
 
         // Update ticket status and resolution details
@@ -158,21 +167,6 @@ class TicketController extends Controller
         ]);
 
         return redirect()->back()->with('success', 'Ticket marked as resolved');
-    }
-
-    public function close(Ticket $ticket)
-    {
-        if (\Illuminate\Support\Facades\Auth::user()->role !== 'agent' && \Illuminate\Support\Facades\Auth::user()->id !== $ticket->created_by) {
-            abort(403);
-        }
-
-        $ticket->update([
-            'status' => 'closed',
-            'resolved_at' => now(),
-            'resolved_by' => \Illuminate\Support\Facades\Auth::user()->id
-        ]);
-
-        return back()->with('success', 'Ticket closed successfully');
     }
 
     public function reopen(Ticket $ticket)

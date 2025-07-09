@@ -1,8 +1,15 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ __('Edit Ticket') }}
-        </h2>
+        <div class="flex justify-between items-center">
+            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
+                {{ __('Edit Ticket') }}
+            </h2>
+            <x-secondary-button>
+                <a href="{{ route('tickets.show', $ticket) }}" class="flex items-center gap-2">
+                    {{ __('Back to Ticket') }}
+                </a>
+            </x-secondary-button>
+        </div>
     </x-slot>
 
     <div class="py-12">
@@ -11,7 +18,7 @@
                 <div class="p-6 text-gray-900 dark:text-gray-100">
                     <form method="POST" action="{{ route('tickets.update', $ticket) }}" class="space-y-6">
                         @csrf
-                        @method('PUT')
+                        @method('PATCH')
 
                         @if (auth()->user()->role === 'admin')
                             <div>
@@ -28,6 +35,7 @@
                                 <x-input-error class="mt-2" :messages="$errors->get('assigned_to')" />
                             </div>
                         @endif
+
                         <div>
                             <x-input-label for="title" :value="__('Title')" />
                             <x-text-input id="title" name="title" type="text" class="mt-1 block w-full"
@@ -37,26 +45,15 @@
 
                         <div>
                             <x-input-label for="description" :value="__('Description')" />
-                            <textarea id="description" name="description"
-                                class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm"
-                                required>{{ old('description', $ticket->description) }}</textarea>
+                            <x-textarea-input id="description" name="description" class="mt-1 block w-full"
+                                rows="4"
+                                required>{{ old('description', $ticket->description) }}</x-textarea-input>
                             <x-input-error class="mt-2" :messages="$errors->get('description')" />
                         </div>
 
-                        <div>
-                            <x-input-label for="status" :value="__('Status')" />
-                            <select id="status" name="status"
-                                class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm">
-                                <option value="open" @selected($ticket->status === 'open')>Open</option>
-                                <option value="in_progress" @selected($ticket->status === 'in_progress')>In Progress</option>
-                                <option value="closed" @selected($ticket->status === 'closed')>Closed</option>
-                            </select>
-                            <x-input-error class="mt-2" :messages="$errors->get('status')" />
-                        </div>
-
                         <div class="flex items-center gap-4">
-                            <x-primary-button>{{ __('Update Ticket') }}</x-primary-button>
-                            <a href="{{ route('tickets.index') }}"
+                            <x-primary-button>{{ __('Save Changes') }}</x-primary-button>
+                            <a href="{{ route('tickets.show', $ticket) }}"
                                 class="text-gray-600 dark:text-gray-400">{{ __('Cancel') }}</a>
                         </div>
                     </form>

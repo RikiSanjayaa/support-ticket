@@ -81,31 +81,16 @@
                                         </span>
                                     @endif
                                 </div>
-                                @if (auth()->id() === $ticket->created_by)
-                                    <button onclick="toggleEdit('ticket-edit')"
+                                @if (auth()->user()->role === 'agent' || auth()->user()->role === 'admin' || auth()->id() === $ticket->created_by)
+                                    <a href="{{ route('tickets.edit', $ticket) }}"
                                         class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 ml-4">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                         </svg>
-                                    </button>
+                                    </a>
                                 @endif
                             </div>
-                        </div>
-
-                        {{-- Ticket Edit Form --}}
-                        <div id="ticket-edit" class="hidden mt-4">
-                            <form action="{{ route('tickets.update', $ticket) }}" method="POST" class="space-y-4">
-                                @csrf
-                                @method('PATCH')
-                                <x-textarea-input name="description" class="w-full"
-                                    rows="4">{{ $ticket->description }}</x-textarea-input>
-                                <div class="flex justify-end gap-2">
-                                    <x-secondary-button type="button"
-                                        onclick="toggleEdit('ticket-edit')">Cancel</x-secondary-button>
-                                    <x-primary-button type="submit">Save Changes</x-primary-button>
-                                </div>
-                            </form>
                         </div>
                     </div>
                 </div>
@@ -193,8 +178,7 @@
             @if ($ticket->status !== 'closed')
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
-                        <form action="{{ route('tickets.replies.store', $ticket) }}" method="POST"
-                            class="space-y-4">
+                        <form action="{{ route('tickets.replies.store', $ticket) }}" method="POST" class="space-y-4">
                             @csrf
                             <div>
                                 <x-input-label for="content" :value="__('Add a reply')"
@@ -215,10 +199,10 @@
             @endif
 
             {{-- Status Control Buttons --}}
-            @if (auth()->user()->role === 'agent' || auth()->id() === $ticket->created_by)
+            @if (auth()->user()->role === 'agent' || auth()->id() === $ticket->created_by || auth()->user()->role === 'admin')
                 <div class="mt-6 flex justify-end gap-4">
                     @if ($ticket->status !== 'closed')
-                        <form action="{{ route('tickets.close', $ticket) }}" method="POST">
+                        <form action="{{ route('tickets.resolve', $ticket) }}" method="POST">
                             @csrf
                             @method('PATCH')
                             <x-danger-button type="submit">

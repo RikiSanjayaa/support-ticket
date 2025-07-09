@@ -20,10 +20,9 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::resource('tickets', TicketController::class);
     Route::post('tickets/{ticket}/assign', [TicketController::class, 'assign'])->name('tickets.assign');
-    Route::post('tickets/{ticket}/resolve', [TicketController::class, 'resolve'])->name('tickets.resolve');
+    Route::patch('tickets/{ticket}/resolve', [TicketController::class, 'resolve'])->name('tickets.resolve');
     Route::post('/tickets/{ticket}/replies', [ReplyController::class, 'store'])->name('tickets.replies.store');
     Route::delete('/replies/{reply}', [ReplyController::class, 'destroy'])->name('replies.destroy');
-    Route::patch('/tickets/{ticket}/close', [TicketController::class, 'close'])->name('tickets.close');
     Route::patch('/tickets/{ticket}/reopen', [TicketController::class, 'reopen'])->name('tickets.reopen');
     Route::patch('/tickets/{ticket}', [TicketController::class, 'update'])->name('tickets.update');
     Route::patch('/replies/{reply}', [ReplyController::class, 'update'])->name('replies.update');
