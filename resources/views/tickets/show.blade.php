@@ -15,23 +15,21 @@
             </h2>
             <div class="flex gap-2">
                 @if (auth()->user()->role === 'agent')
-                    <form action="{{ route('tickets.assign', $ticket) }}" method="POST" class="inline">
-                        @csrf
-                        <x-secondary-button type="submit">
-                            {{ $ticket->assigned_to === auth()->id() ? __('Unassign Me') : __('Assign to Me') }}
-                        </x-secondary-button>
-                    </form>
-                @endif
-
-                @if (auth()->user()->role === 'admin' || auth()->id() === $ticket->created_by)
-                    <form action="{{ route('tickets.destroy', $ticket) }}" method="POST" class="inline">
-                        @csrf
-                        @method('DELETE')
-                        <x-danger-button type="submit"
-                            onclick="return confirm('Are you sure you want to delete this ticket?')">
-                            {{ __('Delete Ticket') }}
-                        </x-danger-button>
-                    </form>
+                    @if ($ticket->assigned_to === auth()->id())
+                        <form action="{{ route('tickets.assign', $ticket) }}" method="POST" class="inline">
+                            @csrf
+                            <x-secondary-button type="submit">
+                                {{ __('Unassign Me') }}
+                            </x-secondary-button>
+                        </form>
+                    @elseif ($ticket->assigned_to === null)
+                        <form action="{{ route('tickets.assign', $ticket) }}" method="POST" class="inline">
+                            @csrf
+                            <x-secondary-button type="submit">
+                                {{ __('Assign to Me') }}
+                            </x-secondary-button>
+                        </form>
+                    @endif
                 @endif
             </div>
         </div>
@@ -98,12 +96,23 @@
 
             <div class="space-y-6">
                 @foreach ($ticket->replies ?? [] as $reply)
-                    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+                    <div
+                        class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg
+                    {{ match ($reply->user->role) {
+                        'admin' => 'border-l-4 border-red-500 dark:border-red-700',
+                        'agent' => 'border-l-4 border-blue-500 dark:border-blue-700',
+                        default => '',
+                    } }}">
                         <div class="p-6">
                             <div class="flex justify-between items-start w-full">
                                 <div class="flex-shrink-0">
                                     <div
-                                        class="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-700 dark:text-gray-300">
+                                        class="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-700 dark:text-gray-300
+                                        {{ match ($reply->user->role) {
+                                            'admin' => 'bg-red-500 dark:bg-red-700',
+                                            'agent' => 'bg-blue-500 dark:bg-blue-700',
+                                            default => 'bg-gray-500 dark:bg-gray-700',
+                                        } }}">
                                         {{ substr($reply->user->name, 0, 1) }}
                                     </div>
                                 </div>
@@ -111,6 +120,15 @@
                                     <div class="flex items-center gap-2">
                                         <span
                                             class="font-medium text-gray-900 dark:text-gray-100">{{ $reply->user->name }}</span>
+                                        <span
+                                            class="text-xs px-2 py-1 rounded-full
+                            {{ match ($reply->user->role) {
+                                'admin' => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
+                                'agent' => 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+                                default => 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300',
+                            } }}">
+                                            {{ ucfirst($reply->user->role) }}
+                                        </span>
                                         <span
                                             class="text-sm text-gray-500 dark:text-gray-400">{{ $reply->created_at->diffForHumans() }}</span>
                                         @if ($reply->updated_at->gt($reply->created_at))
@@ -199,7 +217,10 @@
             @endif
 
             {{-- Status Control Buttons --}}
-            @if (auth()->user()->role === 'agent' || auth()->id() === $ticket->created_by || auth()->user()->role === 'admin')
+            @if (
+                ($ticket->assigned_to === auth()->id() && auth()->user()->role === 'agent') ||
+                    auth()->user()->role === 'admin' ||
+                    auth()->id() === $ticket->created_by)
                 <div class="mt-6 flex justify-end gap-4">
                     @if ($ticket->status !== 'closed')
                         <form action="{{ route('tickets.resolve', $ticket) }}" method="POST">

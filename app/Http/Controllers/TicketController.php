@@ -12,10 +12,37 @@ class TicketController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $tickets = Ticket::latest()->paginate(10);
-        return view('tickets.index', compact('tickets'));
+        $query = Ticket::query()
+            ->with(['creator', 'assignedAgent']);
+
+        if ($request->filled('search')) {
+            $query->where('title', 'like', '%' . $request->search . '%');
+        }
+
+        if ($request->filled('created_by')) {
+            $query->where('created_by', $request->created_by);
+        }
+
+        if ($request->filled('assigned_to')) {
+            if ($request->assigned_to === 'unassigned') {
+                $query->whereNull('assigned_to');
+            } else {
+                $query->where('assigned_to', $request->assigned_to);
+            }
+        }
+
+        $tickets = $query->latest()->paginate(10)->withQueryString();
+
+        if ($request->has('partial')) {
+            return view('tickets._table', compact('tickets'));
+        }
+
+        $users = User::all();
+        $agents = User::where('role', 'agent')->get();
+
+        return view('tickets.index', compact('tickets', 'users', 'agents'));
     }
 
     /**
