@@ -61,21 +61,31 @@ class TicketController extends Controller
         $validated = $request->validate([
             'title' => 'required|max:255',
             'description' => 'required',
-            'status' => 'nullable|in:open,in_progress,closed'
+            'attachments.*' => ['file', 'max:10240', 'mimes:jpeg,png,jpg,pdf,doc,docx']
         ]);
 
-        // Set default status for dashboard submissions
-        if (!isset($validated['status'])) {
-            $validated['status'] = 'open';
+        $ticket = Ticket::create([
+            'title' => $validated['title'],
+            'description' => $validated['description'],
+            'status' => 'open',
+            'created_by' => \Illuminate\Support\Facades\Auth::user()->id,
+        ]);
+
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $filename = $file->store('ticket-attachments', 'public');
+
+                $ticket->attachments()->create([
+                    'filename' => $filename,
+                    'original_filename' => $file->getClientOriginalName(),
+                    'mime_type' => $file->getMimeType(),
+                    'size' => $file->getSize(),
+                ]);
+            }
         }
 
-        // Add the user who created the ticket
-        $validated['created_by'] = \Illuminate\Support\Facades\Auth::user()->id;
-
-        Ticket::create($validated);
-
-        return redirect()->route('dashboard')
-            ->with('status', 'ticket-created');
+        return redirect()->route('tickets.show', $ticket)
+            ->with('status', 'Ticket created successfully');
     }
 
     /**
@@ -115,7 +125,8 @@ class TicketController extends Controller
         $validated = $request->validate([
             'title' => 'required|max:255|string',
             'description' => 'required|string',
-            'assigned_to' => 'nullable|exists:users,id'
+            'assigned_to' => 'nullable|exists:users,id',
+            'new_attachments.*' => ['nullable', 'file', 'max:10240', 'mimes:jpeg,jpg,png,pdf,doc,docx']
         ]);
 
         // Only allow admin to change assigned_to
@@ -124,6 +135,20 @@ class TicketController extends Controller
         }
 
         $ticket->update($validated);
+
+        // Handle new attachments
+        if ($request->hasFile('new_attachments')) {
+            foreach ($request->file('new_attachments') as $file) {
+                $filename = $file->store('ticket-attachments', 'public');
+
+                $ticket->attachments()->create([
+                    'filename' => $filename,
+                    'original_filename' => $file->getClientOriginalName(),
+                    'mime_type' => $file->getMimeType(),
+                    'size' => $file->getSize(),
+                ]);
+            }
+        }
 
         return redirect()->route('tickets.show', $ticket)
             ->with('success', 'Ticket updated successfully');

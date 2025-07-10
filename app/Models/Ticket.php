@@ -45,4 +45,9 @@ class Ticket extends Model
     {
         return $this->hasMany(Reply::class)->oldest();
     }
+
+    public function attachments()
+    {
+        return $this->hasMany(TicketAttachment::class);
+    }
 }
