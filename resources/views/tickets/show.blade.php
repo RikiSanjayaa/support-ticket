@@ -70,7 +70,8 @@
 
                     <div class="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300">
                         <div id="ticket-content">
-                            <div class="flex justify-between items-start w-full">
+                            {{-- Description Section --}}
+                            <div class="flex justify-between items-start w-full mb-6">
                                 <div class="flex-grow">
                                     {{ $ticket->description }}
                                     @if ($ticket->updated_at->gt($ticket->created_at))
@@ -79,6 +80,8 @@
                                         </span>
                                     @endif
                                 </div>
+
+                                {{-- Edit Button --}}
                                 @if (auth()->user()->role === 'agent' || auth()->user()->role === 'admin' || auth()->id() === $ticket->created_by)
                                     <a href="{{ route('tickets.edit', $ticket) }}"
                                         class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 ml-4">
@@ -89,6 +92,60 @@
                                     </a>
                                 @endif
                             </div>
+
+                            {{-- Attachments Section --}}
+                            @if ($ticket->attachments->count() > 0)
+                                <div class="border-t border-gray-200 dark:border-gray-700 pt-4 pb-8">
+                                    <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-4">Attachments:
+                                    </h3>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        @foreach ($ticket->attachments as $attachment)
+                                            <div class="relative group">
+                                                @if (Str::contains($attachment->mime_type, 'image'))
+                                                    {{-- Image Preview with aspect ratio container --}}
+                                                    <div
+                                                        class="aspect-w-16 aspect-h-9 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-900">
+                                                        <a href="{{ Storage::url($attachment->filename) }}"
+                                                            target="_blank" class="block">
+                                                            <img src="{{ Storage::url($attachment->filename) }}"
+                                                                alt="{{ $attachment->original_filename }}"
+                                                                class="object-cover hover:opacity-75 transition-opacity w-full h-full">
+                                                        </a>
+                                                    </div>
+                                                @else
+                                                    {{-- File Icon for non-images --}}
+                                                    <a href="{{ Storage::url($attachment->filename) }}" target="_blank"
+                                                        class="block p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow h-20">
+                                                        <div class="flex items-center space-x-2">
+                                                            <svg class="w-8 h-8 text-gray-500 flex-shrink-0"
+                                                                fill="none" stroke="currentColor"
+                                                                viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    stroke-width="2"
+                                                                    d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                                            </svg>
+                                                            <span
+                                                                class="text-sm text-gray-500 dark:text-gray-400 truncate flex-1">
+                                                                {{ $attachment->original_filename }}
+                                                            </span>
+                                                        </div>
+                                                    </a>
+                                                @endif
+                                                <div class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                                                    @php
+                                                        $bytes = $attachment->size;
+                                                        $sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                                                        $i = $bytes ? floor(log($bytes, 1024)) : 0;
+                                                        $formattedSize =
+                                                            number_format($bytes / pow(1024, $i), 2) . ' ' . $sizes[$i];
+                                                    @endphp
+                                                    {{ $formattedSize }} | {{ $attachment->mime_type }}
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -196,7 +253,8 @@
             @if ($ticket->status !== 'closed')
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
-                        <form action="{{ route('tickets.replies.store', $ticket) }}" method="POST" class="space-y-4">
+                        <form action="{{ route('tickets.replies.store', $ticket) }}" method="POST"
+                            class="space-y-4">
                             @csrf
                             <div>
                                 <x-input-label for="content" :value="__('Add a reply')"
