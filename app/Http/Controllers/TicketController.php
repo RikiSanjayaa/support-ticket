@@ -21,6 +21,10 @@ class TicketController extends Controller
             $query->where('title', 'like', '%' . $request->search . '%');
         }
 
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
         if ($request->filled('created_by')) {
             $query->where('created_by', $request->created_by);
         }
@@ -33,7 +37,24 @@ class TicketController extends Controller
             }
         }
 
-        $tickets = $query->latest()->paginate(10)->withQueryString();
+        // Handle sorting
+        $sort = $request->get('sort', 'created_at');
+        $direction = $request->get('direction', 'desc');
+
+        // Validate sort column for security
+        $allowedSorts = ['created_at', 'title', 'status'];
+        if (!in_array($sort, $allowedSorts)) {
+            $sort = 'created_at';
+        }
+
+        // Validate direction
+        if (!in_array($direction, ['asc', 'desc'])) {
+            $direction = 'desc';
+        }
+
+        $query->orderBy($sort, $direction);
+
+        $tickets = $query->paginate(10)->withQueryString();
 
         if ($request->has('partial')) {
             return view('tickets._table', compact('tickets'));

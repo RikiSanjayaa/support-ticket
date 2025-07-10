@@ -18,11 +18,22 @@
             <div class="mb-6 bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6">
                     <form method="GET" class="space-y-4" id="search-form">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <div>
                                 <x-input-label for="search" :value="__('Search')" />
                                 <x-text-input id="search" name="search" type="text" class="mt-1 block w-full"
                                     :value="request('search')" placeholder="Search by title..." autocomplete="off" />
+                            </div>
+
+                            <div>
+                                <x-input-label for="status" :value="__('Status')" />
+                                <select id="status" name="status"
+                                    class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm">
+                                    <option value="">All Status</option>
+                                    <option value="open" @selected(request('status') == 'open')>Open</option>
+                                    <option value="in_progress" @selected(request('status') == 'in_progress')>In Progress</option>
+                                    <option value="closed" @selected(request('status') == 'closed')>Closed</option>
+                                </select>
                             </div>
 
                             <div>
@@ -52,6 +63,10 @@
                                 </select>
                             </div>
                         </div>
+
+                        {{-- Hidden inputs for sorting --}}
+                        <input type="hidden" name="sort" value="{{ request('sort', 'created_at') }}">
+                        <input type="hidden" name="direction" value="{{ request('direction', 'desc') }}">
                     </form>
                 </div>
             </div>
@@ -66,7 +81,36 @@
                                 <th class="px-6 py-3 text-left text-gray-900 dark:text-gray-100">Status</th>
                                 <th class="px-6 py-3 text-left text-gray-900 dark:text-gray-100">Assigned To</th>
                                 <th class="px-6 py-3 text-left text-gray-900 dark:text-gray-100">Created By</th>
-                                <th class="px-6 py-3 text-left text-gray-900 dark:text-gray-100">Created</th>
+                                <th class="px-6 py-3 text-left text-gray-900 dark:text-gray-100">
+                                    <div class="flex items-center space-x-1">
+                                        <span>Created</span>
+                                        <button type="button" onclick="toggleSort('created_at')"
+                                            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                            @if (request('sort') == 'created_at')
+                                                @if (request('direction') == 'asc')
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                        viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2" d="M8 7l4-4m0 0l4 4m-4-4v18" />
+                                                    </svg>
+                                                @else
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                        viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2" d="M16 17l-4 4m0 0l-4-4m4 4V3" />
+                                                    </svg>
+                                                @endif
+                                            @else
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                                                </svg>
+                                            @endif
+                                        </button>
+                                    </div>
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -121,9 +165,28 @@
         document.getElementById('search-form').submit();
     }
 
+    // Handle sorting
+    function toggleSort(column) {
+        const form = document.getElementById('search-form');
+        const sortInput = form.querySelector('input[name="sort"]');
+        const directionInput = form.querySelector('input[name="direction"]');
+
+        if (sortInput.value === column) {
+            // Toggle direction if same column
+            directionInput.value = directionInput.value === 'asc' ? 'desc' : 'asc';
+        } else {
+            // Set new column with default desc direction
+            sortInput.value = column;
+            directionInput.value = 'desc';
+        }
+
+        submitForm();
+    }
+
     // Add event listeners
     document.addEventListener('DOMContentLoaded', function() {
         const searchInput = document.getElementById('search');
+        const statusSelect = document.getElementById('status');
         const createdBySelect = document.getElementById('created_by');
         const assignedToSelect = document.getElementById('assigned_to');
 
@@ -132,6 +195,7 @@
         searchInput.addEventListener('input', debouncedSubmit);
 
         // Immediate search for dropdowns
+        statusSelect.addEventListener('change', submitForm);
         createdBySelect.addEventListener('change', submitForm);
         assignedToSelect.addEventListener('change', submitForm);
     });
