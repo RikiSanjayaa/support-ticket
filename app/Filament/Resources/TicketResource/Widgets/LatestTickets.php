@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\TicketsResource\Widgets;
+namespace App\Filament\Resources\TicketResource\Widgets;
 
 use App\Models\Ticket;
 use App\Models\User;

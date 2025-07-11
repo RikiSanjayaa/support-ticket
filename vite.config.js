@@ -8,4 +8,19 @@ export default defineConfig({
             refresh: true,
         }),
     ],
+    build: {
+        rollupOptions: {
+            output: {
+                manualChunks: undefined,
+            },
+        },
+        chunkSizeWarningLimit: 1000,
+    },
+    server: {
+        https: false,
+        host: true,
+        hmr: {
+            host: 'localhost',
+        },
+    },
 });

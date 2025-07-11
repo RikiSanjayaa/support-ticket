@@ -2,7 +2,7 @@
 
 namespace App\Providers\Filament;
 
-use App\Filament\Resources\TicketsResource\Widgets\LatestTickets;
+use App\Filament\Resources\TicketResource\Widgets\LatestTickets;
 use App\Filament\Resources\UserResource\Widgets\StatsOverview;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
