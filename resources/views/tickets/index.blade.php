@@ -18,6 +18,7 @@
             <div class="mb-6 bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6">
                     <form method="GET" class="space-y-4" id="search-form">
+                        @csrf
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <div>
                                 <x-input-label for="search" :value="__('Search')" />
