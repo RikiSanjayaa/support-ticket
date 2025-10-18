@@ -1,0 +1,15 @@
+.git
+node_modules
+vendor
+.env
+tests/
+storage/logs/*
+bootstrap/cache/*
+.gitignore
+.editorconfig
+*.md
+.DS_Store
+Thumbs.db
+phpunit.xml
+package-lock.json
+docker-compose.yaml
