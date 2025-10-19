@@ -5,6 +5,7 @@ FROM php:8.4-fpm AS production
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     unzip \
+    curl \
     libpq-dev \
     libonig-dev \
     libxml2-dev \
@@ -21,6 +22,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && pecl install redis \
     && docker-php-ext-enable redis \
     && rm -rf /var/lib/apt/lists/*
+
+# Install Node.js and npm for asset building
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    && apt-get install -y --no-install-recommends nodejs \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www
 

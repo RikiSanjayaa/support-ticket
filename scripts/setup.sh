@@ -43,14 +43,26 @@ docker compose -f "$COMPOSE_FILE" up -d
 echo -e "\n${YELLOW}[3/8] Waiting for services to be ready...${NC}"
 sleep 5
 
+# Step 4.5: Install PHP dependencies
+echo -e "\n${YELLOW}[3.5/8] Installing PHP dependencies (composer)...${NC}"
+
+# Check if SEED_DATABASE is enabled - if so, include dev dependencies for Faker
+SEED_DATABASE=${SEED_DATABASE:-true}
+if [ "$SEED_DATABASE" = "true" ] || [ "$SEED_DATABASE" = "1" ]; then
+    # Include dev dependencies because seeders use Faker
+    docker compose -f "$COMPOSE_FILE" exec -T php-fpm composer install --optimize-autoloader 2>/dev/null || docker compose -f "$COMPOSE_FILE" exec -T php-fpm composer install --no-interaction
+else
+    # Production mode: exclude dev dependencies
+    docker compose -f "$COMPOSE_FILE" exec -T php-fpm composer install --no-dev --optimize-autoloader 2>/dev/null || docker compose -f "$COMPOSE_FILE" exec -T php-fpm composer install --no-dev --no-interaction
+fi
+
 # Step 5: Run migrations
 echo -e "\n${YELLOW}[4/8] Running database migrations...${NC}"
 docker compose -f "$COMPOSE_FILE" exec -T php-fpm php artisan migrate:reset --force 2>/dev/null || true
 docker compose -f "$COMPOSE_FILE" exec -T php-fpm php artisan migrate --force
 
 # Step 6: Run seeders (check SEED_DATABASE env first)
-SEED_DATABASE=${SEED_DATABASE:-true}
-if [ "$SEED_DATABASE" = "true" ]; then
+if [ "$SEED_DATABASE" = "true" ] || [ "$SEED_DATABASE" = "1" ]; then
     echo -e "\n${YELLOW}[5/8] Running database seeders...${NC}"
     docker compose -f "$COMPOSE_FILE" exec -T php-fpm php artisan db:seed --force
 else
@@ -64,14 +76,23 @@ docker compose -f "$COMPOSE_FILE" exec -T php-fpm php artisan config:clear
 docker compose -f "$COMPOSE_FILE" exec -T php-fpm php artisan route:clear
 docker compose -f "$COMPOSE_FILE" exec -T php-fpm php artisan view:clear
 
-# Step 8: Build assets (if not using Vite dev server)
+# Step 8: Build assets
 echo -e "\n${YELLOW}[7/8] Building assets...${NC}"
-docker compose -f "$COMPOSE_FILE" exec -T workspace bash -c "cd /var/www && npm install --legacy-peer-deps" || true
-docker compose -f "$COMPOSE_FILE" exec -T workspace bash -c "cd /var/www && npm run build" || echo -e "${YELLOW}Note: Asset building skipped (Vite dev server may be running)${NC}"
+
+if [ "$ENV" = "dev" ]; then
+    # Development: use workspace service with Node.js
+    docker compose -f "$COMPOSE_FILE" exec -T workspace bash -c "cd /var/www && npm install --legacy-peer-deps"
+    docker compose -f "$COMPOSE_FILE" exec -T workspace bash -c "cd /var/www && npm run build"
+else
+    # Production: use php-fpm container (needs Node.js installed in Dockerfile)
+    docker compose -f "$COMPOSE_FILE" exec -T php-fpm bash -c "cd /var/www && npm install --legacy-peer-deps"
+    docker compose -f "$COMPOSE_FILE" exec -T php-fpm bash -c "cd /var/www && npm run build"
+fi
 
 # Step 9: Set permissions
 echo -e "\n${YELLOW}[8/8] Setting file permissions...${NC}"
-docker compose -f "$COMPOSE_FILE" exec -T php-fpm chmod -R 775 /var/www/storage /var/www/bootstrap/cache 2>/dev/null || true
+docker compose -f "$COMPOSE_FILE" exec -T php-fpm chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
+docker compose -f "$COMPOSE_FILE" exec -T php-fpm chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
 # Success message
 echo -e "\n${GREEN}═══════════════════════════════════════════════════════════${NC}"
