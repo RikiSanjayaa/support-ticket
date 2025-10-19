@@ -1,136 +1,38 @@
-# Support Ticketing System Project
+# Support Ticket System
 
-A Support Ticketing System built with Laravel and Filament Admin Panel, featuring basic user authentication.
+A modern support ticketing system built with Laravel and Filament Admin Panel, running on Docker containers.
 
 ## Features
 
--   Laravel 10.x
--   Filament Admin Panel
--   Basic User Authentication
--   SQLite Database (for quick setup)
+-   Laravel 11.x with Filament Admin Panel
+-   PostgreSQL Database
+-   Redis Caching
+-   Nginx Web Server
+-   User Authentication & Authorization
+-   Docker Containerization for easy deployment
 -   Dark/Light Theme Support
 
 ## Requirements
 
--   PHP 8.1 or higher
--   Composer
--   Node.js & NPM
--   SQLite (or your preferred database)
+-   Docker & Docker Compose
+-   No PHP, Node.js, or database installation needed (all included in containers)
 
-## Installation
+## Quick Start
 
-1. Clone the repository:
+### 1. Clone the Repository
 
 ```bash
 git clone https://github.com/RikiSanjayaa/support-ticket.git
 cd support-ticket
 ```
 
-\*note: enable these in your php.ini file:
-extension=curl
-extension=fileinfo
-extension=intl
-extension=ldap
-extension=mbstring
-extension=exif
-extension=openssl
-extension=pdo_sqlite
-extension=sqlite3
-extension=zip
-
-2. Install PHP dependencies:
-
-```bash
-composer install
-```
-
-3. Install NPM dependencies:
-
-```bash
-npm install
-```
-
-4. Create environment file:
+Clone the environment example as `.env`:
 
 ```bash
 cp .env.example .env
 ```
 
-5. Generate application key:
-
-```bash
-php artisan key:generate
-```
-
-6. Create SQLite database:
-
-```bash
-touch database/database.sqlite
-```
-
-7. Update .env file with SQLite configuration:
-
-```env
-DB_CONNECTION=sqlite
-DB_DATABASE=/absolute/path/to/database.sqlite
-```
-
-8. Run migrations:
-
-```bash
-php artisan migrate
-```
-
-9. Create an admin user:
-
-```bash
-php artisan make:filament-user
-```
-
-## Running the Application
-
-1. Start the Laravel development server:
-
-```bash
-php artisan serve
-```
-
-2. Start the Vite development server:
-
-```bash
-npm run dev
-```
-
-3. Access the application:
-
--   Main site: [http://localhost:8000](http://localhost:8000)
--   Admin panel: [http://localhost:8000/admin](http://localhost:8000/admin)
-
-## Docker Deployment (Production)
-
-This project includes Docker configuration for production deployment on a home server or any Linux machine.
-
-### Prerequisites
-
--   Docker and Docker Compose installed on your server
--   A Linux server (Ubuntu 20.04 LTS or newer recommended)
-
-### Quick Start
-
-1. Clone the repository on your server:
-
-```bash
-git clone https://github.com/RikiSanjayaa/support-ticket.git
-cd support-ticket
-```
-
-2. Create production environment file:
-
-```bash
-cp .env.production .env
-```
-
-3. Configure environment variables in `.env`:
+Configure environment variables in `.env`:
 
 ```bash
 nano .env
@@ -143,6 +45,43 @@ APP_KEY=base64:your_generated_key_here          # Generate: php artisan key:gene
 APP_URL=http://your-server-ip-or-domain         # Your server address
 DB_PASSWORD=your_strong_password                # Set a strong password
 SEED_DATABASE=true                              # Set to true for first run only
+```
+
+### 2. Start Containers
+
+```bash
+docker compose -f compose.dev.yaml up -d
+```
+
+### 3. Run Setup Commands
+
+```bash
+# Wait for services to start
+sleep 5
+
+# Run migrations
+docker compose -f compose.dev.yaml exec php-fpm php artisan migrate --force
+
+# Seed database with test data
+docker compose -f compose.dev.yaml exec php-fpm php artisan db:seed --force
+
+# Clear caches
+docker compose -f compose.dev.yaml exec php-fpm php artisan cache:clear config:clear
+```
+
+### 4. Access the Application
+
+-   **URL**: http://localhost:8000
+-   **Admin Panel**: http://localhost:8000/admin
+
+That's it! The application is now running.
+
+## Automated Setup (Optional)
+
+use the setup script:
+
+```bash
+bash scripts/setup.sh dev
 ```
 
 4. Build and start the containers:

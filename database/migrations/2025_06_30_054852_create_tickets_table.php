@@ -32,12 +32,11 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tickets');
-
         Schema::table('tickets', function (Blueprint $table) {
             $table->dropForeign(['assigned_to']);
             $table->dropForeign(['resolved_by']);
-            $table->dropColumn(['assigned_to', 'resolved_by', 'resolved_at']);
         });
+
+        Schema::dropIfExists('tickets');
     }
 };
