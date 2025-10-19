@@ -48,9 +48,14 @@ echo -e "\n${YELLOW}[4/8] Running database migrations...${NC}"
 docker compose -f "$COMPOSE_FILE" exec -T php-fpm php artisan migrate:reset --force 2>/dev/null || true
 docker compose -f "$COMPOSE_FILE" exec -T php-fpm php artisan migrate --force
 
-# Step 6: Run seeders
-echo -e "\n${YELLOW}[5/8] Running database seeders...${NC}"
-docker compose -f "$COMPOSE_FILE" exec -T php-fpm php artisan db:seed --force
+# Step 6: Run seeders (check SEED_DATABASE env first)
+SEED_DATABASE=${SEED_DATABASE:-true}
+if [ "$SEED_DATABASE" = "true" ]; then
+    echo -e "\n${YELLOW}[5/8] Running database seeders...${NC}"
+    docker compose -f "$COMPOSE_FILE" exec -T php-fpm php artisan db:seed --force
+else
+    echo -e "\n${YELLOW}[5/8] Skipping database seeders (SEED_DATABASE=false)...${NC}"
+fi
 
 # Step 7: Clear caches
 echo -e "\n${YELLOW}[6/8] Clearing application caches...${NC}"
